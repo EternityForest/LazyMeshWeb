@@ -157,7 +157,7 @@ export class MeshChannel {
       this.tempKeys = await this.getTempKeys();
     }
     const p = new Payload();
-    this.sendPacket(p);
+    this.sendPacket(p, false);
   }
 
   constructor() {
@@ -192,7 +192,7 @@ export class MeshChannel {
 
 export class MeshNode {
   transport: ITransport | null = null;
-  generator: AsyncGenerator<Uint8Array> | null = null;
+  generator: AsyncGenerator<Uint8Array|null> | null = null;
   channels: Array<MeshChannel> = [];
 
   // Unix time

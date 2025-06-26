@@ -62,7 +62,7 @@ function sendText(msg: string) {
   chatMessages.value.push(username.value+": "+msg);
   const packet = new Payload();
   packet.addData(32, username.value+": "+msg);
-  channel.sendPacket(packet);
+  channel.sendPacket(packet, true);
 }
 
 onUnmounted(() => {
@@ -100,7 +100,7 @@ onUnmounted(() => {
       <div class="card flex-col" v-for="node in nodes">
         <div class="scroll max-h-12rem">
           <p v-for="data, id in node.dataIds" class="text-left">
-           <b>{{ idToTypeInfo.get(parseInt(id))?.name }}({{id}}):</b> {{ data }}
+           <b>{{ idToTypeInfo.get(parseInt(id.toString()))?.name }}({{id}}):</b> {{ data }}
           </p>
         </div>
       </div>

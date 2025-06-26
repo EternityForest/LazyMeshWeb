@@ -6,7 +6,7 @@
         <h3>{{ channel.name }}</h3>
         <div class="tool-bar">
           <button @click="promptDeleteChannel(channel.name)">Remove</button>
-          <button @click="promptRenameChannel(channel.name, index)">
+          <button @click="promptRenameChannel(index)">
             Rename
           </button>
         </div>
@@ -24,16 +24,15 @@
       </label>
     </div>
     <div class="tool-bar">
-      <button @click="importState">Import</button>
-      <button @click="exportState">Export</button>
+      <!-- <button @click="importState">Import</button>
+      <button @click="exportState">Export</button> -->
       <button @click="addChannel">Add Channel</button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
-import type { Ref } from "vue";
+import { onMounted } from "vue";
 import { channels, state, username } from "../appState";
 
 onMounted(() => {
@@ -50,21 +49,21 @@ function saveState() {
   localStorage.setItem("userState", JSON.stringify(stateValue));
 }
 
-function importState() {
-  const importedState = prompt("Enter JSON state:");
-  if (importedState) {
-    const parsedState = JSON.parse(importedState);
-    username.value = parsedState.username;
-    channels.value = parsedState.channels;
-    saveState();
-  }
-}
+// function importState() {
+//   const importedState = prompt("Enter JSON state:");
+//   if (importedState) {
+//     const parsedState = JSON.parse(importedState);
+//     username.value = parsedState.username;
+//     channels.value = parsedState.channels;
+//     saveState();
+//   }
+// }
 
-function exportState() {
-  const stateValue = state.value;
-  const jsonState = JSON.stringify(stateValue);
-  alert(jsonState);
-}
+// function exportState() {
+//   const stateValue = state.value;
+//   const jsonState = JSON.stringify(stateValue);
+//   alert(jsonState);
+// }
 
 function promptDeleteChannel(channel: string) {
   if (confirm(`Delete channel ${channel}?`)) {
@@ -73,7 +72,7 @@ function promptDeleteChannel(channel: string) {
   }
 }
 
-function promptRenameChannel(channel: string, index: number) {
+function promptRenameChannel(index: number) {
   const newName = prompt("Enter new channel name:");
   if (newName) {
     channels.value[index].name = newName;

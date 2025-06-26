@@ -9,8 +9,6 @@ export class MQTTTransport implements ITransport {
   private topicInterestTimestamps = new Map<string, number>();
   private topicCryptoKeys = new Map<string, Uint8Array>();
   private queue: AsyncQueue<Uint8Array> = new AsyncQueue<Uint8Array>(100);
-  private listenerGenerators: { [key: string]: AsyncGenerator<Uint8Array> } =
-    {};
   private client: mqtt.MqttClient;
 
   constructor(url: string) {
@@ -135,6 +133,7 @@ export class MQTTTransport implements ITransport {
       )
     );
     const encryptedWithTag = new Uint8Array([...iv, ...encrypted]);
+    // @ts-ignore
     this.client.publish(topic, encryptedWithTag);
   }
 }
