@@ -97,7 +97,7 @@ export class MQTTTransport implements ITransport {
     const pathLossByte = data[MeshPacket.PATH_LOSS_OFFSET];
 
     const hex = await this.routingIdToHexKey(routingID);
-    const topic = `lazymesh_route/${hex}`;
+    const topic = `lazymesh_route_${hex}`;
 
     // Sniff outgoing packets and if they are from us and not repeated
     // not that we have repeaters in JS yet, make a listen connection

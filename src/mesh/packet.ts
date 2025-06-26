@@ -61,6 +61,11 @@ export class MeshPacket {
   static readonly AUTH_TAG_LENGTH = 6;
   static readonly CIPHERTEXT_OFFSET = MeshPacket.TIMESTAMP_OFFSET + MeshPacket.TIMESTAMP_LENGTH;
 
+
+  static readonly PACKET_TYPE_DATA = 1;
+  static readonly PACKET_TYPE_DATA_RELIABLE = 2;
+  static readonly PACKET_TYPE_BITMASK = 0b11;
+
   header: number;
   header2: number;
   meshRouteNum: number;

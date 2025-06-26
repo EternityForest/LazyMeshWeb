@@ -59,6 +59,7 @@ channel.setPacketCallback((packet) => {
 
 const text = ref("");
 function sendText(msg: string) {
+  chatMessages.value.push(username.value+": "+msg);
   const packet = new Payload();
   packet.addData(32, username.value+": "+msg);
   channel.sendPacket(packet);

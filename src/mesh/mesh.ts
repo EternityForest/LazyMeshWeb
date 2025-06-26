@@ -51,10 +51,7 @@ export class MeshChannel {
     const nexthoursSinceEpoch = Math.floor((unixTime + 600) / 3600);
     const prevhoursSinceEpoch = Math.floor((unixTime - 600) / 3600);
 
-    ret.routingKey = await deriveRoutingKey(
-      this.psk,
-      unixTime
-    );
+    ret.routingKey = await deriveRoutingKey(this.psk, unixTime);
     ret.cryptoKey = await deriveCryptoKey(this.psk, unixTime);
 
     if (hoursSinceEpoch != nexthoursSinceEpoch) {
@@ -65,10 +62,7 @@ export class MeshChannel {
       );
       ret.nextCryptoKey = await deriveCryptoKey(this.psk, unixTime + 600);
     } else if (hoursSinceEpoch != prevhoursSinceEpoch) {
-      ret.nextRoutingKey = await deriveRoutingKey(
-        this.psk,
-        unixTime - 600
-      );
+      ret.nextRoutingKey = await deriveRoutingKey(this.psk, unixTime - 600);
       ret.nextCryptoKey = await deriveCryptoKey(this.psk, unixTime - 600);
     } else {
       ret.nextRoutingKey = ret.routingKey;
@@ -81,6 +75,15 @@ export class MeshChannel {
   async handlePacket(rawPacket: Uint8Array) {
     if (!this.tempKeys) {
       this.tempKeys = await this.getTempKeys();
+    }
+
+    // We don't currently do control packets, since we only use inherently
+    // reliable transports in the TS version
+    if (
+      (rawPacket[MeshPacket.HEADER_OFFSET] & MeshPacket.PACKET_TYPE_BITMASK) ==
+      0
+    ) {
+      return;
     }
 
     const p = MeshPacket.parse(rawPacket);
@@ -105,7 +108,7 @@ export class MeshChannel {
     }
   }
 
-  async sendPacket(payload: Payload) {
+  async sendPacket(payload: Payload, reliable: boolean | null) {
     if (!this.psk) throw new Error("No psk set");
     if (!this.node) throw new Error("No node set");
 
@@ -113,17 +116,25 @@ export class MeshChannel {
 
     const unixTime = Date.now() / 1000;
 
-    const tempRouteKey = await deriveRoutingKey(
-      this.psk,
-      unixTime
-    );
+    const tempRouteKey = await deriveRoutingKey(this.psk, unixTime);
     const tempCryptoKey = await deriveCryptoKey(this.psk, unixTime);
 
     const entropy = new Uint8Array(8);
     crypto.getRandomValues(entropy);
 
+    let header1 = 0;
+
+    if (reliable) {
+      header1 = MeshPacket.PACKET_TYPE_DATA_RELIABLE;
+    } else {
+      header1 = MeshPacket.PACKET_TYPE_DATA;
+    }
+
+    // Outgoing TTL 0
+    header1 |= 5 << 2;
+
     const p = new MeshPacket(
-      0, // h
+      header1, // h
       0, // h
       0, // routenum
       0, // loss
@@ -170,7 +181,10 @@ export class MeshChannel {
     // sha256 hash pasword to get psk
     const encoder = new TextEncoder();
     const p = encoder.encode(password);
-    this.psk = new Uint8Array(await crypto.subtle.digest("SHA-256", p)).slice(0, 16);
+    this.psk = new Uint8Array(await crypto.subtle.digest("SHA-256", p)).slice(
+      0,
+      16
+    );
 
     this.tempKeys = await this.getTempKeys();
   }
@@ -180,6 +194,9 @@ export class MeshNode {
   transport: ITransport | null = null;
   generator: AsyncGenerator<Uint8Array> | null = null;
   channels: Array<MeshChannel> = [];
+
+  // Unix time
+  seenPackets: Map<string, number> = new Map();
 
   constructor() {}
 
@@ -199,8 +216,57 @@ export class MeshNode {
     this.generator = transport.listen();
   }
 
+  hasSeenPacket(packet: Uint8Array): boolean {
+    const id = packet
+      .slice(
+        MeshPacket.ENTROPY_OFFSET,
+        MeshPacket.ENTROPY_OFFSET + MeshPacket.ENTROPY_LENGTH
+      )
+      .toString();
+
+    const unixTime = new DataView(packet.buffer).getUint32(
+      MeshPacket.TIMESTAMP_OFFSET,
+      true
+    );
+
+    // reject anything not within 3 mintues
+    if (unixTime < ((Date.now() / 1000) - 180)) {
+      return true;
+    }
+
+    if(this.seenPackets.has(id)) {
+      const lastSeen = this.seenPackets.get(id) ?? 0;
+      if (lastSeen + 60 > unixTime) {
+        return true;
+      }
+    }
+
+    while(this.seenPackets.size > 1000000) {
+      const oldest = this.seenPackets.entries().next().value;
+      // Delete if older than 3 minutes
+      if (oldest && oldest[1] + 180 < unixTime) {
+        this.seenPackets.delete(oldest[0]);
+      }
+      else {
+        break;
+      }
+    }
+    if(this.seenPackets.size > 1000000) {
+      console.warn("Too many seen packets");
+      return true;
+    }
+
+    this.seenPackets.set(id, unixTime);
+    return false;
+  }
+
   async rawSend(data: Uint8Array): Promise<void> {
     if (!this.transport) throw new Error("No transport set");
+    
+    if(this.hasSeenPacket(data)){
+      console.debug("Dropping duplicate outgoing packet");
+      return;
+    }
     await this.transport.send(data);
   }
 
@@ -214,6 +280,10 @@ export class MeshNode {
       this.generator = this.transport.listen();
     }
     if (iter.value) {
+      if (this.hasSeenPacket(iter.value)) {
+        console.debug("Dropping duplicate packet");
+        return;
+      }
       for (const channel of this.channels) {
         await channel.handlePacket(iter.value);
       }
