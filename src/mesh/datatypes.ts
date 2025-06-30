@@ -15,8 +15,8 @@ export const dataIds = [
     {
         "id": 2,
         "name": "Unique ID",
-        "description": "An ID that is unique within th channel",
-        "type": "string",
+        "description": "An ID that is unique within the channel",
+        "type": "number",
         "special": false,
         "writable": true
     },
@@ -36,6 +36,23 @@ export const dataIds = [
         "special": false,
         "writable": true
     },
+    {
+        "id": 5,
+        "name": "Destination Node",
+        "description": "Must be a node ID, If present, all other nodes ignore this packet",
+        "type": "number",
+        "special": true,
+        "writable": true
+    },
+    {
+        "id": 6,
+        "name": "Write Command",
+        "description": "If the value is 1, all subsequent values are interpreted as commands to set the values",
+        "type": "number",
+        "special": true,
+        "writable": true
+    },
+
 
     // Lower than 32 reserved for core protocol features
     {
@@ -46,8 +63,56 @@ export const dataIds = [
         "special": true
     },
 
-
-
+    {
+        "id": 33,
+        "name": "Battery Level",
+        "description": "0-255 internal battery level",
+        "type": "number",
+        "special": false
+    },
+    {
+        "id": 34,
+        "name": "Battery Voltage",
+        "description": "Battery Voltage",
+        "unit": "V",
+        "scale": 0.025,
+        "type": "number",
+        "special": false
+    },
+    {
+        "id": 35,
+        "name": "Input Voltage",
+        "description": "Input Voltage",
+        "unit": "V",
+        "scale": 0.025,
+        "type": "number",
+        "special": false
+    },
+    {
+        "id": 35,
+        "name": "Input Voltage",
+        "description": "Input Voltage",
+        "unit": "V",
+        "scale": 0.025,
+        "type": "number",
+        "special": false
+    },
+    {
+        "id": 35,
+        "name": "Input Current",
+        "description": "Input Current",
+        "unit": "A",
+        "scale": 0.01,
+        "type": "number",
+        "special": false
+    },
+    {
+        "id": 36,
+        "name": "Motion Event Count",
+        "description": "Motion Event Count",
+        "type": "number",
+        "special": false
+    }
     // 192-255 Reserved for device specific features
 ]
 

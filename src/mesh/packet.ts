@@ -5,20 +5,24 @@ export class PacketMetadata {
     
 }
 
+// define a type for the data items
+
+export type DataItem = string | number | number[] | string[];
+
 export class Payload {
-  private items: [number, string | number][] = [];
+  private items: [number, DataItem][] = [];
 
   unixTime: number = 0;
 
-  addData(id: number, item: string | number): void {
+  addData(id: number, item: DataItem): void {
     this.items.push([id, item]);
   }
 
-  getDataById(id: number): (string | number)[] {
+  getDataById(id: number): (DataItem)[] {
     return this.items.filter(([entryId]) => entryId === id).map(([, entry]) => entry);
   }
 
-  [Symbol.iterator](): Iterator<[number, string | number]> {
+  [Symbol.iterator](): Iterator<[number, DataItem]> {
     return this.items[Symbol.iterator]();
   }
 
@@ -39,7 +43,7 @@ export class Payload {
   }
 
   toBuffer(): Uint8Array {
-    const flat: (number | string)[] = [];
+    const flat: (number | string| number[] | string[])[] = [];
     for (const [id, val] of this.items) {
       flat.push(id, val);
     }
