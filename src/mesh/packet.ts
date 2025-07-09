@@ -70,6 +70,10 @@ export class MeshPacket {
   static readonly PACKET_TYPE_DATA_RELIABLE = 2;
   static readonly PACKET_TYPE_BITMASK = 0b11;
 
+  static readonly HEADER_2_FIRST_SEND_ATTEMPT_BIT = 0;
+  static readonly HEADER_2_REPEATER_BIT = 1;
+  static readonly HEADER_2_INTERESTED_BIT = 2;  
+
   header: number;
   header2: number;
   meshRouteNum: number;
@@ -136,6 +140,22 @@ export class MeshPacket {
       ciphertext,
       null
     );
+  }
+
+  setHeader1(bit: number, value:boolean): void {
+    if (value) {
+      this.header |= 1 << bit;
+    } else {
+      this.header &= ~(1 << bit);
+    }
+  }
+
+  setHeader2(bit: number, value: boolean): void {
+    if (value) {
+      this.header2 |= 1 << bit;
+    } else {
+      this.header2 &= ~(1 << bit);
+    }
   }
 
   serialize(): Uint8Array {

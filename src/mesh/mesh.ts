@@ -147,6 +147,14 @@ export class MeshChannel {
       rawPayload
     );
 
+    // If we are sending a packet, it probably means we are interested!
+    // Since we don't support repeating.
+    
+    // Just ignore the other flags since we don't support repeating
+    // And we also don't need to support reliable retransmits since
+    // this is oretty much just for MQTT an the like.
+    p.setHeader2(MeshPacket.HEADER_2_INTERESTED_BIT, true);
+
     await p.encrypt(tempCryptoKey);
 
     await this.node?.rawSend(p.serialize());
